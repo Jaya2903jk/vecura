@@ -1,0 +1,318 @@
+:root {
+    --dark-blue: #10497C;
+    --primary-blue: #0981C5;
+    --light-blue: #1EA9E1;
+    --black: #000000;
+    --grey: #696A6C;
+    --white: #FFFFFF;
+}
+
+/* Page background */
+.page-inner {
+    background: #f4f8fb;
+}
+
+/* Premium Card */
+.premium-card {
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(16, 73, 124, 0.08);
+    border: none;
+    overflow: hidden;
+}
+
+
+.premium-header {
+    background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+    color: white;
+
+    font-weight: 600;
+
+    padding: 6px 12px;
+    font-size: 12px;
+    min-height: 32px;
+    height: auto;
+
+    display: flex;
+    align-items: center;
+}
+
+/* Labels */
+.label {
+    font-size: 12px;
+    color: var(--grey);
+}
+
+.value {
+    font-weight: 600;
+    color: var(--black);
+}
+
+/* Buttons */
+.btn-premium {
+    background: linear-gradient(135deg, var(--primary-blue), var(--light-blue));
+    color: #fff;
+    border: none;
+    transition: 0.3s;
+}
+
+.btn-premium:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(9, 129, 197, 0.4);
+}
+
+.btn-outline-premium {
+    border: 1px solid var(--primary-blue);
+    color: var(--primary-blue);
+}
+
+.btn-outline-premium:hover {
+    background: var(--primary-blue);
+    color: #fff;
+}
+
+/* Timeline */
+.timeline-item {
+    border-left: 3px solid var(--primary-blue);
+    padding-left: 15px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.timeline-item::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background: var(--light-blue);
+    border-radius: 50%;
+    position: absolute;
+    left: -6px;
+    top: 5px;
+}
+
+/* Badge */
+.badge-premium {
+    background: var(--light-blue);
+    color: white;
+}
+
+
+
+/* Section Block */
+.section-block {
+    margin-bottom: 10px;
+}
+
+/* Section Title */
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-blue);
+    margin-bottom: 10px;
+    position: relative;
+    padding-left: 12px;
+}
+
+/* Left highlight bar */
+.section-title::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    height: 14px;
+    width: 4px;
+    background: var(--light-blue);
+    border-radius: 2px;
+}
+
+/* Info box improve */
+.info-box {
+    background: #f8fbff;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #eef3f7;
+    transition: 0.2s;
+}
+
+.info-box:hover {
+    background: #eef6fb;
+}
+
+/* Logs */
+.log-item {
+    padding: 10px 0;
+    border-bottom: 1px dashed #eaeaea;
+}
+
+.log-item:last-child {
+    border-bottom: none;
+}
+
+.custom-dropdown {
+    position: absolute;
+    z-index: 1000;
+    max-height: 220px;
+    overflow-y: auto;
+    border-radius: 0.25rem;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    width: 100%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    background-color: #ff4d4f;
+}
+
+.custom-item:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
+}
+
+
+/* Dropdown Container */
+.custom-dropdown {
+    position: absolute;
+    z-index: 1000;
+    margin-top: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+/* Each Item */
+.custom-item {
+    cursor: pointer;
+    padding: 10px 12px;
+    transition: background 0.15s ease;
+    font-size: 14px;
+}
+
+/* Hover Effect */
+.custom-item:hover {
+    background: #f5f5f5;
+}
+
+/* Selected Item */
+.selected-item {
+    background: #e9ecef;
+    font-weight: 500;
+}
+
+/* Tick Mark */
+.tick {
+    font-size: 13px;
+    color: #555;
+}
+
+/* Selected Box */
+.selected-box {
+    margin-top: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: #f8f9fa;
+    font-size: 13px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Card wrapper */
+.table-card {
+    background: #fff;
+    /* border-radius: 10px; */
+    box-shadow: 0 6px 18px rgba(16, 73, 124, 0.08);
+    overflow: hidden;
+}
+
+/* Compact header */
+.premium-header {
+    background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+    color: #fff;
+    font-size: 13px;
+    padding: 8px 12px;
+    font-weight: 600;
+}
+
+/* Table */
+.premium-table {
+    width: 100%;
+    margin: 0;
+}
+
+/* Header */
+.premium-table thead th {
+    background: #f4f8fb;
+    color: var(--dark-blue);
+    font-size: 12px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5edf5;
+}
+
+/* Body (SMALL HEIGHT) */
+.premium-table tbody td {
+    padding: 6px 10px;
+    font-size: 13px;
+    border-bottom: 1px solid #eef3f7;
+    color: #000;
+}
+
+/* Hover */
+.premium-table tbody tr:hover {
+    background: #f8fbff;
+}
+
+/* Total column black */
+.total-text {
+    color: #000;
+}
+
+/* Badge small + clean */
+.badge {
+    padding: 3px 7px;
+    font-size: 11px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* Badge colors (soft) */
+.badge-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.badge-info {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Grand total compact */
+.grand-total {
+    background: var(--dark-blue);
+    color: #fff;
+    font-size: 13px;
+}
+
+.grand-total td {
+    padding: 7px 10px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+    .premium-table thead th {
+        font-size: 11px;
+        padding: 6px;
+    }
+
+    .premium-table tbody td {
+        font-size: 12px;
+        padding: 5px;
+    }
+
+    .badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
