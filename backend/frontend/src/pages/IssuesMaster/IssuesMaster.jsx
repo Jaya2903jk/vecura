@@ -1,9 +1,15 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import swal from "sweetalert";
 
-export default function Ticket() {
+export default function IssuesMaster() {
     const navigate = useNavigate();
+
+    const [selectedDept, setSelectedDept] = useState(null);
+    const [editDept, setEditDept] = useState({
+        Departmentid: "",
+        DepartmentName: ""
+    });
 
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,18 +21,7 @@ export default function Ticket() {
     const [statusFilter, setStatusFilter] = useState("");
     const [priorityFilter, setPriorityFilter] = useState("");
 
-    const getStatus = (status) => {
-        switch (status) {
-            case "1": return "Pending";
-            case "2": return "Accepted";
-            case "3": return "Approved";
-            case "4": return "Completed";
-            default: return status;
-        }
-    };
-
-    // ✅ API CALL (FIXED QUERY PARAMS)
-    useEffect(() => {
+    const fetchData = () => {
         const token = localStorage.getItem("token");
 
         setLoading(true);
@@ -34,11 +29,7 @@ export default function Ticket() {
         const params = new URLSearchParams();
         params.append("page", page);
 
-        if (search) params.append("search", search);
-        if (statusFilter) params.append("status", statusFilter);
-        if (priorityFilter) params.append("priority", priorityFilter);
-
-        fetch(`http://127.0.0.1:8000/api/tickets?${params.toString()}`, {
+        fetch(`http://127.0.0.1:8000/api/issue-departments?${params.toString()}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -52,12 +43,72 @@ export default function Ticket() {
                 setLoading(false);
             })
             .catch(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        fetchData();
     }, [page, search, statusFilter, priorityFilter]);
 
-    // ✅ PAGINATION UI
+    const handleDelete = (id) => {
+        swal({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            buttons: ["Cancel", "Yes, delete it!"],
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                const token = localStorage.getItem("token");
+
+                fetch(`http://127.0.0.1:8000/api/issue-departments/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json"
+                    }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status) {
+                            swal("Deleted!", "Department deleted.", "success");
+                            fetchData();
+                        } else {
+                            swal("Error", "Delete failed", "error");
+                        }
+                    })
+                    .catch(() => swal("Error", "Something went wrong", "error"));
+            }
+        });
+    };
+
+    const handleUpdate = () => {
+        const token = localStorage.getItem("token");
+
+        fetch(`http://127.0.0.1:8000/api/issue-departments/${editDept.Departmentid}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                DepartmentName: editDept.DepartmentName
+            }),
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status) {
+                    swal("Success", "Updated successfully", "success");
+                    document.getElementById("editModalClose").click();
+                    fetchData();
+                } else {
+                    swal("Error", "Update failed", "error");
+                }
+            })
+            .catch(() => swal("Error", "Something went wrong", "error"));
+    };
+
     const renderPagination = () => {
         let pages = [];
-
         let start = Math.max(1, page - 2);
         let end = Math.min(lastPage, page + 2);
 
@@ -70,10 +121,8 @@ export default function Ticket() {
                 </li>
             );
         }
-
         return pages;
     };
-
     return (
         <div className="page-inner">
 
@@ -86,7 +135,7 @@ export default function Ticket() {
                     <li className="separator">
                         <i className="icon-arrow-right"></i>
                     </li>
-                    <li className="nav-item">Ticket</li>
+                    <li className="nav-item">Ticket Issues Master</li>
                 </ul>
             </div>
 
@@ -96,7 +145,7 @@ export default function Ticket() {
 
                         {/* Header */}
                         <div className="card-header d-flex justify-content-between align-items-center">
-                            <h4 className="card-title mb-0">Ticket List</h4>
+                            <h4 className="card-title mb-0">Ticket Issues Master List</h4>
                             <div>
                                 <button
                                     className="btn btn-label-info btn-round me-2"
@@ -106,9 +155,9 @@ export default function Ticket() {
                                 </button>
                                 <button
                                     className="btn btn-primary btn-round"
-                                    onClick={() => navigate("/ticket/add")}
+                                    onClick={() => navigate("/issues-master/add")}
                                 >
-                                    Add Ticket
+                                    Add Issues Master
                                 </button>
                             </div>
                         </div>
@@ -121,7 +170,7 @@ export default function Ticket() {
                                     <input
                                         type="text"
                                         className="form-control"
-                                        placeholder="Search tickets..."
+                                        placeholder="Search tickets issues..."
                                         value={search}
                                         onChange={(e) => {
                                             setPage(1);
@@ -140,30 +189,11 @@ export default function Ticket() {
                                         }}
                                     >
                                         <option value="">All Status</option>
-                                        <option value="1">Pending</option>
-                                        <option value="2">Accepted</option>
-                                        <option value="3">Approved</option>
-                                        <option value="4">Completed</option>
+                                        <option value="1">Active</option>
+                                        <option value="2">Inactive</option>
+
                                     </select>
                                 </div>
-
-                                <div className="col-md-3">
-                                    <select
-                                        className="form-control"
-                                        value={priorityFilter}
-                                        onChange={(e) => {
-                                            setPage(1);
-                                            setPriorityFilter(e.target.value);
-                                        }}
-                                    >
-                                        <option value="">All Priority</option>
-                                        <option value="Low">Low</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="High">High</option>
-                                    </select>
-                                </div>
-
-                                {/* ✅ RESET FIXED */}
                                 <div className="col-md-2">
                                     <button
                                         className="btn btn-secondary w-100"
@@ -183,22 +213,22 @@ export default function Ticket() {
                             {loading ? (
                                 <div className="text-center py-4">
                                     <div className="spinner-border text-primary"></div>
-                                    <p>Loading tickets...</p>
+                                    <p>Loading tickets Issues...</p>
                                 </div>
                             ) : (
                                 <>
                                     {/* TABLE */}
                                     <div className="table-responsive">
+
                                         <table className="table table-hover align-middle">
                                             <thead className="table-light">
-                                                <tr>
-                                                    <th>#</th>
-                                                    <th>Ticket ID</th>
-                                                    <th>Department</th>
-                                                    <th>Issue Type</th>
-                                                    <th>Priority</th>
+                                                <tr className="text-center">
+                                                    <th>S.No</th>
+                                                    <th>Department Name</th>
+                                                    <th>Issues Category</th>
+                                                    <th>Issues Name</th>
+                                                    <th>Approval level</th>
                                                     <th>Status</th>
-                                                    <th>Created</th>
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
@@ -207,42 +237,54 @@ export default function Ticket() {
                                                 {tickets.length === 0 ? (
                                                     <tr>
                                                         <td colSpan="8" className="text-center">
-                                                            No tickets found
+                                                            No tickets master found
                                                         </td>
                                                     </tr>
                                                 ) : (
                                                     tickets.map((t, index) => (
-                                                        <tr key={t.ticket_id}>
+                                                        <tr key={t.Departmentid} className="text-center">
                                                             <td>{(page - 1) * 10 + index + 1}</td>
-                                                            <td><strong>{t.ticket_id}</strong></td>
-                                                            <td>{t.department}</td>
-                                                            <td>{t.issue_type}</td>
-
-                                                            <td>
-                                                                <span className="badge bg-danger">
-                                                                    {t.priority}
-                                                                </span>
-                                                            </td>
+                                                            <td >{t.DepartmentName}</td>
+                                                            <td >Customer</td>
+                                                            <td >Service discount</td>
+                                                            <td >Level 3 - (Manager,Admin,Account)  </td>
 
                                                             <td>
                                                                 <span className="badge bg-warning text-dark">
-                                                                    {getStatus(t.status)}
+                                                                    Active
                                                                 </span>
                                                             </td>
 
-                                                            <td>{t.created_at}</td>
-
                                                             <td>
-                                                                <button className="btn btn-sm btn-info me-2"
-                                                                 onClick={() => navigate(`/ticket/view/${t.ticket_id}`)}
+
+                                                                <button
+                                                                    className="btn btn-info btn-sm me-2"
+                                                                    onClick={() => setSelectedDept(t)}
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#exampleModal"
                                                                 >
                                                                     View
                                                                 </button>
+
                                                                 <button
-                                                                    className="btn btn-sm btn-outline-primary"
-                                                                    onClick={() => navigate(`/ticket/manage/${t.ticket_id}`)}
+                                                                    className="btn btn-primary btn-sm me-2"
+                                                                    onClick={() => {
+                                                                        setEditDept({
+                                                                            Departmentid: t.Departmentid,
+                                                                            DepartmentName: t.DepartmentName
+                                                                        });
+                                                                    }}
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#editModal"
                                                                 >
-                                                                    Manage
+                                                                    Edit
+                                                                </button>
+
+                                                                <button
+                                                                    className="btn btn-danger btn-sm"
+                                                                    onClick={() => handleDelete(t.Departmentid)}
+                                                                >
+                                                                    Delete
                                                                 </button>
                                                             </td>
                                                         </tr>
@@ -280,6 +322,68 @@ export default function Ticket() {
                                     </nav>
                                 </>
                             )}
+
+
+                            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="exampleModalLabel">Ticket Issues Master View</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div className="modal-body">
+                                            {selectedDept ? (
+                                                <><p><strong>Department Name:</strong> {selectedDept.DepartmentName}</p>
+                                                </>
+                                            ) : (
+                                                <p>No data</p>
+                                            )}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal fade" id="editModal">
+                                <div className="modal-dialog modal-dialog-centered">
+                                    <div className="modal-content">
+
+                                        <div className="modal-header">
+                                            <h5>Edit Ticket Issues Master</h5>
+                                            <button
+                                                className="btn-close"
+                                                data-bs-dismiss="modal"
+                                                id="editModalClose"
+                                            ></button>
+                                        </div>
+
+                                        <div className="modal-body">
+                                            <input
+                                                className="form-control"
+                                                value={editDept.DepartmentName}
+                                                onChange={(e) =>
+                                                    setEditDept({
+                                                        ...editDept,
+                                                        DepartmentName: e.target.value
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="modal-footer">
+                                            <button className="btn btn-danger" data-bs-dismiss="modal">
+                                                Cancel
+                                            </button>
+
+                                            <button className="btn btn-primary" onClick={handleUpdate}>
+                                                Update
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

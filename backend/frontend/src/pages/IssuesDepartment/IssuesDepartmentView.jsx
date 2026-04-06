@@ -49,7 +49,7 @@ export default function TicketAdd() {
 
                 if (data.status) {
                     alert("Issue department created successfully ");
-                    navigate("/issue-departments");
+                    navigate("/issues-department");
                 } else {
                     alert("Error creating issue department ");
                 }

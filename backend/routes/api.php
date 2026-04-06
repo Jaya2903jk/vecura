@@ -33,20 +33,16 @@ Route::middleware('check.token')->group(function () {
 
 
     Route::get('/customers/search', [MasterController::class, 'searchCustomer']);
-    Route::get('/search-service', [MasterController::class, 'searchService']);    // Route::post('/billing', [MasterController::class, 'store']);
+    Route::get('/search-service', [MasterController::class, 'searchService']);
+    // Route::post('/billing', [MasterController::class, 'store']);
 
-    // Route::get('/departments', [DepartmentController::class, 'index']);
-    // Route::post('/departments', [DepartmentController::class, 'store']);
-    // Route::get('/departments/{id}', [DepartmentController::class, 'show']);
-    // Route::put('/departments/{id}', [DepartmentController::class, 'update']);
-    // Route::delete('/departments/{id}', [DepartmentController::class, 'destroy']);
     Route::get('/departments', [MasterController::class, 'departments']);
     Route::get('/issue-levels/{departmentId}', [MasterController::class, 'levels']);
     Route::get('/issue-subjects/{levelId}', [MasterController::class, 'subjects']);
 
-    Route::get('/issue-departments', [IssueDepartmentController::class, 'index']);     // list
-    Route::post('/issue-departments', [IssueDepartmentController::class, 'store']);    // create
-    Route::get('/issue-departments/{id}', [IssueDepartmentController::class, 'show']); // view single
+    Route::get('/issue-departments', [IssueDepartmentController::class, 'index']);
+    Route::post('/issue-departments', [IssueDepartmentController::class, 'store']);
+    Route::get('/issue-departments/{id}', [IssueDepartmentController::class, 'show']);
     Route::put('/issue-departments/{id}', [IssueDepartmentController::class, 'update']);
     Route::delete('/issue-departments/{id}', [IssueDepartmentController::class, 'destroy']);
 
@@ -55,4 +51,7 @@ Route::middleware('check.token')->group(function () {
     Route::get('/issues-master/{id}', [IssuesMasterController::class, 'show']);
     Route::put('/issues-master/{id}', [IssuesMasterController::class, 'update']);
     Route::delete('/issues-master/{id}', [IssuesMasterController::class, 'destroy']);
+
+
+
 });

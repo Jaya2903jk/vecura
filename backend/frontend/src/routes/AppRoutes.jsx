@@ -13,7 +13,6 @@ import IssuesDepartmentAdd from "../pages/IssuesDepartment/IssuesDepartmentAdd";
 import IssuesDepartmentView from "../pages/IssuesDepartment/IssuesDepartmentView";
 
 import IssuesMaster from "../pages/IssuesMaster/IssuesMaster";
-import IssuesMasterManage from "../pages/IssuesMaster/IssuesMasterManage";
 import IssuesMasterAdd from "../pages/IssuesMaster/IssuesMasterAdd";
 import IssuesMasterView from "../pages/IssuesMaster/IssuesMasterView";
 // import IssuesMasterEdit from "../pages/IssuesMaster/IssuesMasterEdit";
@@ -36,12 +35,10 @@ export default function AppRoutes({ setLoading }) {
                     <Route path="/issues-department/add" element={<IssuesDepartmentAdd />} />
                     <Route path="/issues-department/view/:id" element={<IssuesDepartmentView />} />
 
-                    {/* Issues Master (CRUD) */}
-                    <Route path="/issues-master" element={<IssuesMaster />} />
-                    <Route path="/issues-master/manage" element={<IssuesMasterManage />} />
+                     <Route path="/issues-master" element={<IssuesMaster />} />
                     <Route path="/issues-master/add" element={<IssuesMasterAdd />} />
                     <Route path="/issues-master/view/:id" element={<IssuesMasterView />} />
-                    {/* <Route path="/issues-master/edit/:id" element={<IssuesMasterEdit />} /> */}
+
 
 
                 </Route>

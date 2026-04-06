@@ -193,6 +193,12 @@ const Sidebar = ({ setLoading }) => {
                                 <p>Issues Department</p>
                             </Link>
                         </li>
+                        <li className="nav-item active">
+                            <Link to="/issues-master">
+                                <i className="bi bi-database"></i>
+                                <p>Issues Master</p>
+                            </Link>
+                        </li>
                     </ul>
 
                 </div>

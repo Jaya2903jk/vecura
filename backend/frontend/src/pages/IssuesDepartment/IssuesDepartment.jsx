@@ -1,11 +1,16 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import swal from "sweetalert";
 
 export default function TicketDepartment() {
     const navigate = useNavigate();
+
     const [selectedDept, setSelectedDept] = useState(null);
+    const [editDept, setEditDept] = useState({
+        Departmentid: "",
+        DepartmentName: ""
+    });
+
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -16,26 +21,13 @@ export default function TicketDepartment() {
     const [statusFilter, setStatusFilter] = useState("");
     const [priorityFilter, setPriorityFilter] = useState("");
 
-    const getStatus = (status) => {
-        switch (status) {
-            case "1": return "Pending";
-            case "2": return "Accepted";
-            case "3": return "Approved";
-            case "4": return "Completed";
-            default: return status;
-        }
-    };
-
-    useEffect(() => {
+    const fetchData = () => {
         const token = localStorage.getItem("token");
 
         setLoading(true);
 
         const params = new URLSearchParams();
         params.append("page", page);
-
-        // if (search) params.append("search", search);
-        // if (statusFilter) params.append("status", statusFilter);
 
         fetch(`http://127.0.0.1:8000/api/issue-departments?${params.toString()}`, {
             headers: {
@@ -51,6 +43,10 @@ export default function TicketDepartment() {
                 setLoading(false);
             })
             .catch(() => setLoading(false));
+    };
+
+    useEffect(() => {
+        fetchData();
     }, [page, search, statusFilter, priorityFilter]);
 
     const handleDelete = (id) => {
@@ -74,9 +70,7 @@ export default function TicketDepartment() {
                     .then(res => res.json())
                     .then(data => {
                         if (data.status) {
-                            swal("Deleted!", "Department has been deleted.", "success");
-
-                            // 🔁 Refresh list
+                            swal("Deleted!", "Department deleted.", "success");
                             fetchData();
                         } else {
                             swal("Error", "Delete failed", "error");
@@ -86,9 +80,35 @@ export default function TicketDepartment() {
             }
         });
     };
+
+    const handleUpdate = () => {
+        const token = localStorage.getItem("token");
+
+        fetch(`http://127.0.0.1:8000/api/issue-departments/${editDept.Departmentid}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                DepartmentName: editDept.DepartmentName
+            }),
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status) {
+                    swal("Success", "Updated successfully", "success");
+                    document.getElementById("editModalClose").click();
+                    fetchData();
+                } else {
+                    swal("Error", "Update failed", "error");
+                }
+            })
+            .catch(() => swal("Error", "Something went wrong", "error"));
+    };
+
     const renderPagination = () => {
         let pages = [];
-
         let start = Math.max(1, page - 2);
         let end = Math.min(lastPage, page + 2);
 
@@ -101,10 +121,8 @@ export default function TicketDepartment() {
                 </li>
             );
         }
-
         return pages;
     };
-
     return (
         <div className="page-inner">
 
@@ -171,10 +189,9 @@ export default function TicketDepartment() {
                                         }}
                                     >
                                         <option value="">All Status</option>
-                                        <option value="1">Pending</option>
-                                        <option value="2">Accepted</option>
-                                        <option value="3">Approved</option>
-                                        <option value="4">Completed</option>
+                                        <option value="1">Active</option>
+                                        <option value="2">Inactive</option>
+
                                     </select>
                                 </div>
                                 <div className="col-md-2">
@@ -202,6 +219,7 @@ export default function TicketDepartment() {
                                 <>
                                     {/* TABLE */}
                                     <div className="table-responsive">
+
                                         <table className="table table-hover align-middle">
                                             <thead className="table-light">
                                                 <tr className="text-center">
@@ -231,30 +249,7 @@ export default function TicketDepartment() {
                                                                     Active
                                                                 </span>
                                                             </td>
-                                                            {/* <td>
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn btn-sm btn-info me-2"
-                                                                    data-bs-toggle="modal"
-                                                                    data-bs-target="#exampleModal"
-                                                                    onClick={() => setSelectedDept(t)}
-                                                                >
-                                                                    View
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-sm btn-outline-primary"
-                                                                    onClick={() => navigate(`/ticket/manage/${t.Departmentid}`)}
-                                                                >
-                                                                    Edit
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-danger btn-sm"
-                                                                    onClick={() => handleDelete(t.Departmentid)}
-                                                                >
-                                                                    Delete
-                                                                </button>
 
-                                                            </td> */}
                                                             <td>
 
                                                                 <button
@@ -267,8 +262,15 @@ export default function TicketDepartment() {
                                                                 </button>
 
                                                                 <button
-                                                                    className="btn btn-outline-primary btn-sm me-2"
-                                                                    onClick={() => navigate(`/ticket/manage/${t.Departmentid}`)}
+                                                                    className="btn btn-primary btn-sm me-2"
+                                                                    onClick={() => {
+                                                                        setEditDept({
+                                                                            Departmentid: t.Departmentid,
+                                                                            DepartmentName: t.DepartmentName
+                                                                        });
+                                                                    }}
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#editModal"
                                                                 >
                                                                     Edit
                                                                 </button>
@@ -326,9 +328,7 @@ export default function TicketDepartment() {
                                         </div>
                                         <div className="modal-body">
                                             {selectedDept ? (
-                                                <>
-                                                    <p><strong>Department ID:</strong> {selectedDept.Departmentid}</p>
-                                                    <p><strong>Department Name:</strong> {selectedDept.DepartmentName}</p>
+                                                <><p><strong>Department Name:</strong> {selectedDept.DepartmentName}</p>
                                                 </>
                                             ) : (
                                                 <p>No data</p>
@@ -336,8 +336,46 @@ export default function TicketDepartment() {
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                            {/* <button type="button" class="btn btn-primary">Save changes</button> */}
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal fade" id="editModal">
+                                <div className="modal-dialog modal-dialog-centered">
+                                    <div className="modal-content">
+
+                                        <div className="modal-header">
+                                            <h5>Edit Ticket Department</h5>
+                                            <button
+                                                className="btn-close"
+                                                data-bs-dismiss="modal"
+                                                id="editModalClose"
+                                            ></button>
+                                        </div>
+
+                                        <div className="modal-body">
+                                            <input
+                                                className="form-control"
+                                                value={editDept.DepartmentName}
+                                                onChange={(e) =>
+                                                    setEditDept({
+                                                        ...editDept,
+                                                        DepartmentName: e.target.value
+                                                    })
+                                                }
+                                            />
+                                        </div>
+
+                                        <div className="modal-footer">
+                                            <button className="btn btn-danger" data-bs-dismiss="modal">
+                                                Cancel
+                                            </button>
+
+                                            <button className="btn btn-primary" onClick={handleUpdate}>
+                                                Update
+                                            </button>
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>

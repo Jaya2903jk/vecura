@@ -140,21 +140,18 @@ export default function TicketAdd() {
     const [form, setForm] = useState({
         DepartmentName: "",
     });
-
     const [loading, setLoading] = useState(false);
-
-    // ✅ Alert state
     const [alert, setAlert] = useState({
         show: false,
         type: "", // success | danger
-        message: ""
+        message: "",
     });
 
     // handle input
     const handleChange = (e) => {
         setForm({
             ...form,
-            [e.target.name]: e.target.value
+            [e.target.name]: e.target.value,
         });
     };
 
@@ -171,10 +168,10 @@ export default function TicketAdd() {
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
-                Accept: "application/json"
+                Accept: "application/json",
             },
             body: JSON.stringify({
-                DepartmentName: form.DepartmentName
+                DepartmentName: form.DepartmentName,
             }),
         })
             .then((res) => res.json())
@@ -182,11 +179,10 @@ export default function TicketAdd() {
                 setLoading(false);
 
                 if (data.status) {
-                    // ✅ Success
                     setAlert({
                         show: true,
                         type: "success",
-                        message: "Department created successfully!"
+                        message: "Department created successfully!",
                     });
 
                     setForm({ DepartmentName: "" });
@@ -194,67 +190,80 @@ export default function TicketAdd() {
                     // auto hide + redirect
                     setTimeout(() => {
                         setAlert({ show: false, type: "", message: "" });
-                        navigate("/issue-departments");
+                        navigate("/issues-department");
                     }, 2000);
-
                 } else {
-                    // ❌ API error
                     setAlert({
                         show: true,
                         type: "danger",
-                        message: data.message || "Error creating department"
+                        message: data.message || "Error creating department",
                     });
                 }
             })
             .catch(() => {
                 setLoading(false);
 
-                // ❌ Network error
                 setAlert({
                     show: true,
                     type: "danger",
-                    message: "Something went wrong!"
+                    message: "Something went wrong!",
                 });
             });
     };
 
     return (
         <div className="page-inner">
-
             {/* Header */}
             <div class="page-header">
-                <h3 class="fw-bold mb-3">Ticket Department</h3><ul class="breadcrumbs mb-3">
+                <h3 class="fw-bold mb-3">Ticket Department</h3>
+                <ul class="breadcrumbs mb-3">
                     <li class="nav-home">
-                        <a href="#">                                 <i class="icon-home"></i>
+                        <a href="#">
+                            {" "}
+                            <i class="icon-home"></i>
                         </a>
                     </li>
                     <li class="separator">
                         <i class="icon-arrow-right"></i>
-                    </li>                         <li class="nav-item">
+                    </li>{" "}
+                    <li class="nav-item">
                         <a href="#"> Ticket Department</a>
-                    </li>                         <li class="separator">                             <i class="icon-arrow-right"></i>
-                    </li>                         <li class="nav-item">                             <a href="#">Add Ticket Department</a>                         </li>                     </ul>                 </div>
-
+                    </li>{" "}
+                    <li class="separator">
+                        {" "}
+                        <i class="icon-arrow-right"></i>
+                    </li>{" "}
+                    <li class="nav-item">
+                        {" "}
+                        <a href="#">Add Ticket Department</a>{" "}
+                    </li>{" "}
+                </ul>{" "}
+            </div>
 
             <div className="row">
                 <div className="col-md-12">
                     <div className="card">
-
                         <div className="card-header">
-                            <div className="card-title">Add Ticket Department</div>
+                            <div className="card-title">
+                                Add Ticket Department
+                            </div>
                         </div>
                         {alert.show && alert.type === "success" && (
                             <div className="m-3 p-3 border-start border-5 border-success bg-light rounded shadow-sm">
                                 <div className="d-flex align-items-center">
                                     <i className="bi bi-check-circle-fill text-success me-2 fs-4"></i>
                                     <div>
-                                        <strong className="text-success">Success!</strong>
+                                        <strong className="text-success">
+                                            Success!
+                                        </strong>
                                         <div>{alert.message}</div>
                                     </div>
                                     <button
                                         type="button"
                                         className="btn-close ms-auto"
-                                        onClick={() => setAlert({ ...alert, show: false })}
+                                        onClick={() =>
+                                            setAlert({ ...alert, show: false })
+                                        }
                                     ></button>
                                 </div>
                             </div>
@@ -265,13 +274,17 @@ export default function TicketAdd() {
                                 <div className="d-flex align-items-center">
                                     <i className="bi bi-x-circle-fill text-danger me-2 fs-4"></i>
                                     <div>
-                                        <strong className="text-danger">Error!</strong>
+                                        <strong className="text-danger">
+                                            Error!
+                                        </strong>
                                         <div>{alert.message}</div>
                                     </div>
                                     <button
                                         type="button"
                                         className="btn-close ms-auto"
-                                        onClick={() => setAlert({ ...alert, show: false })}
+                                        onClick={() =>
+                                            setAlert({ ...alert, show: false })
+                                        }
                                     ></button>
                                 </div>
                             </div>
@@ -281,7 +294,6 @@ export default function TicketAdd() {
                         <form onSubmit={handleSubmit}>
                             <div className="card-body">
                                 <div className="row">
-
                                     <div className="col-md-6 col-lg-4">
                                         <div className="form-group">
                                             <label>Department Name</label>
@@ -296,7 +308,6 @@ export default function TicketAdd() {
                                             />
                                         </div>
                                     </div>
-
                                 </div>
                             </div>
 
@@ -312,14 +323,14 @@ export default function TicketAdd() {
                                 <button
                                     type="button"
                                     className="btn btn-danger"
-                                    onClick={() => navigate("/issues-department")}
+                                    onClick={() =>
+                                        navigate("/issues-department")
+                                    }
                                 >
-
                                     Cancel
                                 </button>
                             </div>
                         </form>
-
                     </div>
                 </div>
             </div>
