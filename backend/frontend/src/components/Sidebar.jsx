@@ -187,7 +187,7 @@ const Sidebar = ({ setLoading }) => {
 
                             </li>
                         ))}
-                        <li className="nav-item active">
+                        {/* <li className="nav-item active">
                             <Link to="/issues-department">
                                 <i className="bi bi-database"></i>
                                 <p>Issues Department</p>
@@ -199,7 +199,49 @@ const Sidebar = ({ setLoading }) => {
                                 <p>Issues Master</p>
                             </Link>
                         </li>
+                        <li className="nav-item active">
+                            <Link to="/issues-category">
+                                <i className="bi bi-database"></i>
+                                <p>Issues Category</p>
+                            </Link>
+                        </li> */}
+                        <li className="nav-item">
+                            <a
+                                data-bs-toggle="collapse"
+                                href="#issuesMenu"
+                                className="collapsed"
+                            >
+                                <i className="bi bi-database"></i>
+                                <p>Issues</p>
+                                <span className="caret"></span>
+                            </a>
+
+                            <div className="collapse" id="issuesMenu">
+                                <ul className="nav nav-collapse">
+
+                                    <li>
+                                        <Link to="/issues-department">
+                                            <span className="sub-item">Issues Department</span>
+                                        </Link>
+                                    </li>
+
+                                    <li>
+                                        <Link to="/issues-master">
+                                            <span className="sub-item">Issues Master</span>
+                                        </Link>
+                                    </li>
+
+                                    <li>
+                                        <Link to="/issues-category">
+                                            <span className="sub-item">Issues Category</span>
+                                        </Link>
+                                    </li>
+
+                                </ul>
+                            </div>
+                        </li>
                     </ul>
+
 
                 </div>
             </div>

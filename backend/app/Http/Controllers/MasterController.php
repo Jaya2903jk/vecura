@@ -18,7 +18,63 @@ class MasterController extends Controller
             'data' => $data
         ]);
     }
+    public function issueCategories(Request $request)
+    {
+        $query = DB::table('issue_categories');
+ if ($request->has('department_id') && $request->department_id != '') {
+        $query->where('department_id', $request->department_id);
+    }
+        $data = $query->get();
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    }
+    public function getIssuesByCategory($categoryId)
+    {
+        try {
+            $issues = DB::table('IssueMasterTest')
+                ->where('CategoryId', $categoryId)
+                ->where('Status', 1) // optional: only active issues
+                ->select(
+                    'IssueId',
+                    'DepartmentId',
+                    'CategoryId',
+                    'IssueName',
+                    'Status',
+                    'Level1Role',
+                    'Level2Role',
+                    'Level3Role',
+                    'Level4Role',
+                    'Level5Role'
+                )
+                ->get();
 
+            return response()->json([
+                'status' => true,
+                'data' => $issues
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+     public function getRoles()
+    {
+        $roles = DB::connection('sqlsrv')
+            ->table('User_Group_Master')
+            ->select('UserGroupID', 'UserGroupName')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $roles
+        ]);
+    }
     public function levels($departmentId)
     {
         if (!is_numeric($departmentId)) {

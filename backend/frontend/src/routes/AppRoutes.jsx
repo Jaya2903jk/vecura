@@ -15,6 +15,10 @@ import IssuesDepartmentView from "../pages/IssuesDepartment/IssuesDepartmentView
 import IssuesMaster from "../pages/IssuesMaster/IssuesMaster";
 import IssuesMasterAdd from "../pages/IssuesMaster/IssuesMasterAdd";
 import IssuesMasterView from "../pages/IssuesMaster/IssuesMasterView";
+
+import IssuesCategory from "../pages/IssuesCategory/IssuesCategory";
+import IssuesCategoryAdd from "../pages/IssuesCategory/IssuesCategoryAdd";
+import IssuesCategoryView from "../pages/IssuesCategory/IssuesCategoryView";
 // import IssuesMasterEdit from "../pages/IssuesMaster/IssuesMasterEdit";
 export default function AppRoutes({ setLoading }) {
     return (
@@ -38,6 +42,10 @@ export default function AppRoutes({ setLoading }) {
                      <Route path="/issues-master" element={<IssuesMaster />} />
                     <Route path="/issues-master/add" element={<IssuesMasterAdd />} />
                     <Route path="/issues-master/view/:id" element={<IssuesMasterView />} />
+
+                     <Route path="/issues-category" element={<IssuesCategory />} />
+                    <Route path="/issues-category/add" element={<IssuesCategoryAdd />} />
+                    <Route path="/issues-category/view/:id" element={<IssuesCategoryView />} />
 
 
 

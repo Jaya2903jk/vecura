@@ -3,11 +3,13 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\IssueDepartmentController;
+use App\Http\Controllers\IssuesCategoryController;
 use App\Http\Controllers\IssuesMasterController;
 use App\Http\Controllers\MasterController;
 use App\Http\Controllers\TicketController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 
 
@@ -39,6 +41,10 @@ Route::middleware('check.token')->group(function () {
     Route::get('/departments', [MasterController::class, 'departments']);
     Route::get('/issue-levels/{departmentId}', [MasterController::class, 'levels']);
     Route::get('/issue-subjects/{levelId}', [MasterController::class, 'subjects']);
+    Route::get('/categories-list', [MasterController::class, 'issueCategories']);
+    Route::get('/categories-list/{departmentId}', [MasterController::class, 'issueCategories']);
+    Route::get('/issues/{categoryId}', [MasterController::class, 'getIssuesByCategory']);
+    Route::get('/roles', [MasterController::class, 'getRoles']);
 
     Route::get('/issue-departments', [IssueDepartmentController::class, 'index']);
     Route::post('/issue-departments', [IssueDepartmentController::class, 'store']);
@@ -51,6 +57,13 @@ Route::middleware('check.token')->group(function () {
     Route::get('/issues-master/{id}', [IssuesMasterController::class, 'show']);
     Route::put('/issues-master/{id}', [IssuesMasterController::class, 'update']);
     Route::delete('/issues-master/{id}', [IssuesMasterController::class, 'destroy']);
+
+    Route::get('/issues-category', [IssuesCategoryController::class, 'index']);
+    Route::post('/issues-category', [IssuesCategoryController::class, 'store']);
+    Route::get('/issues-category/{id}', [IssuesCategoryController::class, 'show']);
+    Route::put('/issues-category/{id}', [IssuesCategoryController::class, 'update']);
+    Route::delete('/issues-category/{id}', [IssuesCategoryController::class, 'destroy']);
+
 
 
 
