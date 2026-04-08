@@ -4,6 +4,7 @@ import "../../assets/css/ticket.css";
 
 export default function TicketAdd() {
     const navigate = useNavigate();
+    const VE_SUPPORT_ID = 33;
     const [departments, setDepartments] = useState([]);
     const [selectedDept, setSelectedDept] = useState("");
 
@@ -13,14 +14,26 @@ export default function TicketAdd() {
     const [issues, setIssues] = useState([]);
     const [form, setForm] = useState({
         department: "",
-        level1: "",
-        subject: "",
-        priority: "",
+        // level1: "",
+        issue: "",
+        category: "",
+        // subject: "",
+        // priority: "",
         description: "",
         file: null,
+        Source: "",
+        customer_id: "",
+        customer_code: "",
+        customer_name: "",
     });
-    const [loading, setLoading] = useState(false);
+    const isVESupport = Number(form.DepartmentId) === VE_SUPPORT_ID;
 
+    const [loading, setLoading] = useState(false);
+    const [alert, setAlert] = useState({
+        show: false,
+        type: "", // success | danger
+        message: "",
+    });
     const [customerSearch, setCustomerSearch] = useState("");
     const [customerResults, setCustomerResults] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -35,14 +48,37 @@ export default function TicketAdd() {
     const [serviceList, setServiceList] = useState([]);
     const handleDepartmentChange = (e) => {
         const deptId = e.target.value;
+
         setSelectedDept(deptId);
+
         setForm(prev => ({
             ...prev,
             DepartmentId: deptId,
-            CategoryId: "" // reset category
+            category: "",   // reset category
+            issue: "",      // reset issue
+            Source: "",     // reset source
+            alternate_mobile: "",
+            customer_id: "",
+            customer_code: "",
+            customer_name: "",
+            description: "",
+            file: null
         }));
 
-        fetchCategories(deptId);
+        setCategories([]);
+        setIssues([]);
+
+        setSelectedCustomer(null);
+        setCustomerSearch("");
+        setCustomerResults([]);
+
+        setSelectedService(null);
+        setServiceSearch("");
+        setServiceResults([]);
+
+        if (deptId) {
+            fetchCategories(deptId);
+        }
     };
     const fetchCategories = async (departmentId) => {
         try {
@@ -82,6 +118,7 @@ export default function TicketAdd() {
         const data = await res.json();
         if (data.status) setCustomerResults(data.data);
     };
+
     const handleServiceSearch = async (value) => {
         setServiceSearch(value);
 
@@ -129,7 +166,6 @@ export default function TicketAdd() {
             })
             .catch((err) => console.log(err));
     }, []);
-    // submit
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -156,15 +192,41 @@ export default function TicketAdd() {
                 setLoading(false);
 
                 if (data.status) {
-                    alert("Ticket created successfully ");
-                    navigate("/tickets");
+                    setAlert({
+                        show: true,
+                        type: "success",
+                        message: "Ticket created successfully!",
+                    });
+                    setForm({
+                        department: "",
+                        issue: "",
+                        category: "",
+                        description: "",
+                        file: null,
+                        Source: "",
+                        customer_id: "",
+                        customer_code: "",
+                        customer_name: "",
+                    });
+                    setTimeout(() => {
+                        setAlert({ show: false, type: "", message: "" });
+                        navigate("/ticket");
+                    }, 2000);
                 } else {
-                    alert("Error creating ticket ");
+                    setAlert({
+                        show: true,
+                        type: "danger",
+                        message: data.message || "Error creating ticket",
+                    });
                 }
             })
             .catch(() => {
                 setLoading(false);
-                alert("Something went wrong ");
+                setAlert({
+                    show: true,
+                    type: "danger",
+                    message: "Something went wrong!",
+                });
             });
     };
 
@@ -198,8 +260,51 @@ export default function TicketAdd() {
                 <div className="col-md-12">
                     <div className="card">
                         <div className="card-header">
-                            <div className="card-title">Raise Ticket</div>
+                            <div className="card-title">
+                                Raise Ticket
+                            </div>
                         </div>
+                        {alert.show && alert.type === "success" && (
+                            <div className="m-3 p-3 border-start border-5 border-success bg-light rounded shadow-sm">
+                                <div className="d-flex align-items-center">
+                                    <i className="bi bi-check-circle-fill text-success me-2 fs-4"></i>
+                                    <div>
+                                        <strong className="text-success">
+                                            Success!
+                                        </strong>
+                                        <div>{alert.message}</div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn-close ms-auto"
+                                        onClick={() =>
+                                            setAlert({ ...alert, show: false })
+                                        }
+                                    ></button>
+                                </div>
+                            </div>
+                        )}
+
+                        {alert.show && alert.type === "danger" && (
+                            <div className="m-3 p-3 border-start border-5 border-danger bg-light rounded shadow-sm">
+                                <div className="d-flex align-items-center">
+                                    <i className="bi bi-x-circle-fill text-danger me-2 fs-4"></i>
+                                    <div>
+                                        <strong className="text-danger">
+                                            Error!
+                                        </strong>
+                                        <div>{alert.message}</div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn-close ms-auto"
+                                        onClick={() =>
+                                            setAlert({ ...alert, show: false })
+                                        }
+                                    ></button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* FORM START */}
                         <form onSubmit={handleSubmit}>
@@ -280,40 +385,101 @@ export default function TicketAdd() {
                                             ))}
                                         </select>
                                     </div>
-                                    <div className="col-md-4 mt-3">
-                                        <label className="form-label fw-semibold">Source<span className="text-danger">*</span></label>
-                                        <select name="Source" id="Source" className="form-control">
-                                            <option value="">Select Any One</option>
-                                            <option value="Direct">InBound Call</option>
-                                            <option value="Mail">Mail</option>
-                                            <option value="Branch">Branch</option>
-                                            <option value="Self">OutBound Call</option>
-                                            <option value="Legal">Legal Notice</option>
-                                            <option value="Consumer">Consumer Forum</option>
-                                            <option value="SocialMedia">Social Media</option>
-                                            <option value="Help Line">Help Line</option>
-                                            <option value="Whatsapp Chat">Whatsapp Chat</option>
-                                            <option value="Spark Team">Spark Team</option>
-                                            <option value="Call center team">Call center team</option>
-                                            <option value="Google Review">Google Review</option>
-                                        </select>
-                                    </div>
-                                    {/* <div className="col-md-4">
-                                        <label className="form-label fw-semibold">Subject of Issue</label>
-                                        <select
-                                            name="level1"
-                                            className="form-control"
-                                            value={form.level1}
-                                            onChange={(e) => setForm({ ...form, level1: e.target.value })}
-                                        >
-                                            <option value="">Select Level</option>
-                                            {levels.map((lvl, idx) => (
-                                                <option key={idx} value={lvl.label}>
-                                                    {lvl.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div> */}
+                                    {isVESupport && (
+                                        <>
+                                            <div className="col-md-4 mt-3">
+                                                <label className="form-label fw-semibold">
+                                                    Alternate Mobile
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name="alternate_mobile"
+                                                    className="form-control"
+                                                    value={form.alternate_mobile || ""}
+                                                    onChange={handleChange}
+                                                    placeholder="Enter alternate mobile"
+                                                />
+                                            </div>
+
+                                            {/* Source */}
+                                            <div className="col-md-4 mt-3">
+                                                <label className="form-label fw-semibold">
+                                                    Source <span className="text-danger">*</span>
+                                                </label>
+                                                <select
+                                                    name="Source"
+                                                    className="form-control"
+                                                    value={form.Source || ""}
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="">Select Any One</option>
+                                                    <option value="Direct">InBound Call</option>
+                                                    <option value="Mail">Mail</option>
+                                                    <option value="Branch">Branch</option>
+                                                    <option value="Self">OutBound Call</option>
+                                                    <option value="Legal">Legal Notice</option>
+                                                    <option value="Consumer">Consumer Forum</option>
+                                                    <option value="SocialMedia">Social Media</option>
+                                                    <option value="Help Line">Help Line</option>
+                                                    <option value="Whatsapp Chat">Whatsapp Chat</option>
+                                                    <option value="Spark Team">Spark Team</option>
+                                                    <option value="Call center team">Call center team</option>
+                                                    <option value="Google Review">Google Review</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-md-4 position-relative">
+                                                <label className="form-label fw-semibold">Customer <span className="text-danger">*</span> <span className="text-muted">(Search by Reg Or Mobile)</span></label>
+                                                <div className="input-group">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        placeholder="Search Customer..."
+                                                        value={selectedCustomer ? `${selectedCustomer.RegistrationNo} - ${selectedCustomer.FirstName}` : customerSearch}
+                                                        onChange={(e) => !selectedCustomer && handleCustomerSearch(e.target.value)}
+                                                        disabled={!!selectedCustomer}
+                                                    />
+                                                    {selectedCustomer && (
+                                                        <button
+                                                            className="btn btn-danger"
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setCustomerSearch("");
+                                                                setSelectedCustomer(null);
+                                                                setCustomerResults([]);
+                                                                setForm({ ...form, customer_id: "" });
+                                                            }}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                {!selectedCustomer && customerResults.length > 0 && (
+                                                    <ul className="list-group w-100 custom-dropdown mt-1">
+                                                        {customerResults.map((c) => (
+                                                            <li
+                                                                key={c.id}
+                                                                className="list-group-item d-flex justify-content-between align-items-center custom-item"
+                                                                onClick={() => {
+                                                                    setSelectedCustomer(c);
+                                                                    setCustomerSearch(`${c.RegistrationNo} - ${c.FirstName}`);
+                                                                    setCustomerResults([]);
+                                                                    // setForm({ ...form, customer_id: c.id });
+                                                                    setForm({
+                                                                        ...form,
+                                                                        customer_id: c.id,
+                                                                        customer_code: c.RegistrationNo,
+                                                                        customer_name: c.FirstName
+                                                                    });
+                                                                }}
+                                                            >
+                                                                {c.RegistrationNo} - {c.FirstName}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
                                     {form.level1 && (
                                         <>
                                             <div className="col-md-4 position-relative">
@@ -449,22 +615,6 @@ export default function TicketAdd() {
 
                                         </>
                                     )}
-
-                                    {/* <div className="col-md-4 mt-3">
-                                        <label className="form-label fw-semibold">Priority<span className="text-danger">*</span></label>
-                                        <select
-                                            name="priority"
-                                            className="form-control"
-                                            value={form.priority}
-                                            onChange={handleChange}
-                                            required
-                                        >
-                                            <option value="">Select Priority</option>
-                                            <option value="Low">Low</option>
-                                            <option value="Medium">Medium</option>
-                                            <option value="High">High</option>
-                                        </select>
-                                    </div> */}
                                     {/* File Upload */}
                                     <div className="col-md-4 mt-3">
                                         <label className="form-label fw-semibold">Attachment</label>

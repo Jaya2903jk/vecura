@@ -1,218 +1,373 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 
-export default function TicketDetails() {
+export default function Ticket() {
     const navigate = useNavigate();
-    const [ticketStatus, setTicketStatus] = useState("1");
+    const [locationFilter, setLocationFilter] = useState("");
+    const [locations, setLocations] = useState([]);
+    const [tickets, setTickets] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // ✅ STATIC DATA (later replace with API)
-    const ticket = {
-        ticket_id: "TCK-AB1234",
-        department: "IT Support",
-        subject: "System not working",
-        priority: "High",
-        status: "1",
-        description: "My system is not turning on properly. It powers on but the screen remains black and no response from keyboard/mouse.",
-        created_at: "2026-04-02 10:30 AM",
-        created_by: "John Doe (Employee ID: EMP-456)",
-        assignee: "Jane Smith (IT Admin)"
-    };
+    const [page, setPage] = useState(1);
+    const [lastPage, setLastPage] = useState(1);
 
-    // Activity log (static demo data)
-    const activityLog = [
-        { time: "2026-04-02 10:30 AM", action: "Ticket created", user: "John Doe", type: "created" },
-        { time: "2026-04-02 10:35 AM", action: "Ticket assigned to Jane Smith", user: "System", type: "assigned" }
-    ];
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
+    const [priorityFilter, setPriorityFilter] = useState("");
+    const [typeFilter, setTypeFilter] = useState("");
 
-    const getStatusBadge = (status) => {
+    const getStatus = (status) => {
         switch (status) {
+            case 0:
+            case "0":
+                return "Pending";
+            case 1:
             case "1":
-                return <span className="badge bg-warning text-dark">Pending</span>;
+                return "Accepted";
+            case 2:
             case "2":
-                return <span className="badge bg-info">Accepted</span>;
-            case "3":
-                return <span className="badge bg-success">Approved</span>;
-            case "4":
-                return <span className="badge bg-primary">Completed</span>;
-            case "5":
-                return <span className="badge bg-danger">Rejected</span>;
+                return "Approved";
+            case 3:
+            case "7":
+                return "Completed";
             default:
                 return status;
         }
     };
+    useEffect(() => {
+        // Load locations for filter dropdown
+        const token = localStorage.getItem("token");
+        fetch(`http://127.0.0.1:8000/api/locations`, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then(res => res.json())
+            .then(data => setLocations(data.data || []));
+    }, []);
+    useEffect(() => {
+        const token = localStorage.getItem("token");
 
-    const getPriorityBadge = (priority) => {
-        switch (priority.toLowerCase()) {
-            case "high":
-                return <span className="badge bg-danger">High</span>;
-            case "medium":
-                return <span className="badge bg-warning text-dark">Medium</span>;
-            case "low":
-                return <span className="badge bg-success">Low</span>;
-            default:
-                return priority;
+        setLoading(true);
+
+        const params = new URLSearchParams();
+        params.append("page", page);
+
+        if (search) params.append("search", search);
+        if (statusFilter) params.append("status", statusFilter);
+        if (priorityFilter) params.append("priority", priorityFilter);
+        if (typeFilter) params.append("type", typeFilter);
+            if (locationFilter) params.append("location", locationFilter); //
+
+        fetch(`http://127.0.0.1:8000/api/tickets?${params.toString()}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.status) {
+                    setTickets(data.data.data || []);
+                    setLastPage(data.data.last_page || 1);
+                }
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [page, search, statusFilter, priorityFilter, typeFilter, locationFilter]);
+    const renderPagination = () => {
+        let pages = [];
+
+        let start = Math.max(1, page - 2);
+        let end = Math.min(lastPage, page + 2);
+
+        for (let i = start; i <= end; i++) {
+            pages.push(
+                <li
+                    key={i}
+                    className={`page-item ${page === i ? "active" : ""}`}
+                >
+                    <button className="page-link" onClick={() => setPage(i)}>
+                        {i}
+                    </button>
+                </li>
+            );
         }
-    };
 
-    const handleAction = (action) => {
-        // Replace with API call
-        console.log(`Action: ${action} for ticket ${ticket.ticket_id}`);
-        if (action === "accept") setTicketStatus("2");
-        if (action === "approve") setTicketStatus("3");
-        if (action === "reject") setTicketStatus("5");
-        if (action === "complete") setTicketStatus("4");
+        return pages;
     };
 
     return (
         <div className="page-inner">
-            <div className="page-header">
-                <h3 className="fw-bold mb-3">Ticket Details</h3>
+            <div className="d-flex align-items-left flex-column pt-2 pb-4">
                 <ul className="breadcrumbs mb-3">
                     <li className="nav-home">
-                        <a href="#"><i className="icon-home"></i></a>
+                        <i className="icon-home"></i>
                     </li>
-                    <li className="separator"><i className="icon-arrow-right"></i></li>
-                    <li className="nav-item"><a href="#">Tickets</a></li>
-                    <li className="separator"><i className="icon-arrow-right"></i></li>
-                    <li className="nav-item active">Ticket Details</li>
+                    <li className="separator">
+                        <i className="icon-arrow-right"></i>
+                    </li>
+                    <li className="nav-item">Ticket</li>
                 </ul>
             </div>
 
             <div className="row">
-                <div className="col-lg-8">
+                <div className="col-md-12">
                     <div className="card">
                         <div className="card-header d-flex justify-content-between align-items-center">
-                            <div className="card-title">Ticket Information</div>
-                            <div>{getStatusBadge(ticketStatus)}</div>
-                        </div>
-                        <div className="card-body">
-                            <div className="row mb-4">
-                                <div className="col-md-6">
-                                    <strong>Ticket ID:</strong> {ticket.ticket_id}
-                                </div>
-                                <div className="col-md-6">
-                                    <strong>Priority:</strong> {getPriorityBadge(ticket.priority)}
-                                </div>
-                            </div>
-                            <div className="row mb-4">
-                                <div className="col-md-6">
-                                    <strong>Department:</strong> {ticket.department}
-                                </div>
-                                <div className="col-md-6">
-                                    <strong>Created:</strong> {ticket.created_at}
-                                </div>
-                            </div>
-                            <div className="row mb-4">
-                                <div className="col-md-6">
-                                    <strong>Created By:</strong> {ticket.created_by}
-                                </div>
-                                <div className="col-md-6">
-                                    <strong>Assignee:</strong> {ticket.assignee}
-                                </div>
-                            </div>
-                            <div className="row">
-                                <div className="col-12">
-                                    <strong>Subject:</strong>
-                                    <h5 className="mt-1">{ticket.subject}</h5>
-                                </div>
-                            </div>
-                            <hr />
-                            <div className="row">
-                                <div className="col-12">
-                                    <strong>Description:</strong>
-                                    <p className="mt-2">{ticket.description}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-lg-4">
-                    <div className="card h-100 shadow-sm border-0">
-                        <div className="card-header bg-info text-white py-3">
-                            <h5 className="mb-0 fw-semibold"> Ticket Actions</h5>
-                        </div>
-                        <div className="card-body d-flex flex-column justify-content-between">
+                            <h4 className="card-title mb-0">Ticket List</h4>
                             <div>
-                                <h6 className="fw-bold text-muted mb-3">Available Actions</h6>
-
-                                <div className="d-grid gap-2">
-
-                                    {ticketStatus === "1" && (
-                                        <>
-                                            <button
-                                                className="btn btn-outline-primary fw-semibold"
-                                                onClick={() => handleAction("accept")}
-                                            >
-                                                Assigned to Me
-                                            </button>
-
-                                            <button
-                                                className="btn bg-success fw-semibold"
-                                                onClick={() => handleAction("approve")}
-                                            >
-                                                Approve Ticket
-                                            </button>
-
-                                            <button
-                                                className="btn btn-outline-danger fw-semibold"
-                                                onClick={() => handleAction("reject")}
-                                            >
-                                                Escalte Ticket                                            </button>
-                                        </>
-                                    )}
-
-                                    {ticketStatus === "2" && (
-                                        <button
-                                            className="btn btn-primary fw-semibold"
-                                            onClick={() => handleAction("complete")}
-                                        >
-                                            Mark as Completed
-                                        </button>
-                                    )}
-
-                                </div>
-                            </div>
-
-                            <div className="alert alert-warning mt-4 small">
-                                <strong>Note:</strong><br />
-                                Please validate before approving or rejecting.
-                            </div>
-                            <div className="d-grid mt-2">
                                 <button
-                                    className="btn btn-dark fw-semibold"
-                                    onClick={() => navigate(-1)}
+                                    className="btn btn-label-info btn-round me-2"
+                                    onClick={() => navigate("/ticket/manage")}
                                 >
-                                    ⬅ Back to List
+                                    Manage
+                                </button>
+                                <button
+                                    className="btn btn-primary btn-round"
+                                    onClick={() => navigate("/ticket/add")}
+                                >
+                                    Add Ticket
                                 </button>
                             </div>
-
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <div className="row mt-4">
-                <div className="col-12">
-                    <div className="card">
-                        <div className="card-header">
-                            <div className="card-title">Activity Log</div>
-                        </div>
                         <div className="card-body">
-                            <div className="timeline">
-                                {activityLog.map((log, index) => (
-                                    <div key={index} className="timeline-item">
-                                        <div className="timeline-line"></div>
-                                        <div className="timeline-indicator bg-primary"></div>
-                                        <div className="timeline-content">
-                                            <div className="d-flex justify-content-between">
-                                                <span className="fw-bold">{log.action}</span>
-                                                <small className="text-muted">{log.time}</small>
-                                            </div>
-                                            <small className="text-muted">by {log.user}</small>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="row mb-3">
+                                <div className="col-md-12">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Search tickets..."
+                                        value={search}
+                                        onChange={(e) => {
+                                            setPage(1);
+                                            setSearch(e.target.value);
+                                        }}
+                                    />
+                                </div>
+                                </div>
+                                <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <select
+                                        className="form-control"
+                                        value={locationFilter}
+                                        onChange={(e) => {
+                                            setPage(1);
+                                            setLocationFilter(e.target.value);
+                                        }}
+                                    >
+                                        <option value="">All Locations</option>
+                                        {locations.map((loc) => (
+                                            <option key={loc.LocationCode} value={loc.LocationCode}>
+                                                {loc.LocationName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="col-md-3">
+                                    <select
+                                        className="form-control"
+                                        value={statusFilter}
+                                        onChange={(e) => {
+                                            setPage(1);
+                                            setStatusFilter(e.target.value);
+                                        }}
+                                    >
+                                        <option value="">All Status</option>
+                                        <option value="1">Pending</option>
+                                        <option value="2">Accepted</option>
+                                        <option value="3">Approved</option>
+                                        <option value="4">Completed</option>
+                                    </select>
+                                </div>
+
+                                <div className="col-md-3">
+                                    <select
+                                        className="form-control"
+                                        value={typeFilter}
+                                        onChange={(e) => {
+                                            setPage(1);
+                                            setTypeFilter(e.target.value);
+                                        }}
+                                    >
+                                        <option value="">All</option>
+                                        <option value="ticket">Ticket</option>
+                                        <option value="complaint">
+                                            Complaint
+                                        </option>
+                                    </select>
+                                </div>
+
+                                {/* ✅ RESET FIXED */}
+                                <div className="col-md-2">
+                                    <button
+                                        className="btn btn-secondary w-100"
+                                        onClick={() => {
+                                            setPage(1);
+                                            setSearch("");
+                                            setStatusFilter("");
+                                            setPriorityFilter("");
+                                            setTypeFilter("");
+                                        }}
+                                    >
+                                        Reset
+                                    </button>
+                                </div>
                             </div>
+
+                            {/* LOADING */}
+                            {loading ? (
+                                <div className="text-center py-4">
+                                    <div className="spinner-border text-primary"></div>
+                                    <p>Loading tickets...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* TABLE */}
+                                    <div className="table-responsive">
+                                        <table className="table table-hover align-middle">
+                                            <thead className="table-light">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Ticket ID</th>
+                                                    <th>Location</th>
+                                                    <th>Department</th>
+                                                    <th>Reg No</th>
+                                                    <th>Issue Type</th>
+                                                    <th>Type</th>
+                                                    <th>Status</th>
+                                                    <th>Created</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {tickets.length === 0 ? (
+                                                    <tr>
+                                                        <td
+                                                            colSpan="8"
+                                                            className="text-center"
+                                                        >
+                                                            No tickets found
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    tickets.map((t, index) => (
+                                                        <tr key={t.ticket_id}>
+                                                            <td>
+                                                                {(page - 1) *
+                                                                    10 +
+                                                                    index +
+                                                                    1}
+                                                            </td>
+                                                            <td>
+                                                                <strong>
+                                                                    {
+                                                                        t.ticket_code
+                                                                    }
+                                                                </strong>
+                                                            </td>
+                                                            <td>{t.location}</td>
+                                                            <td>
+                                                                {t.department}
+                                                            </td>
+                                                            <td>{t.reg_no}</td>
+                                                            <td>
+                                                                {t.issue_type}
+                                                            </td>
+
+                                                            <td>
+                                                                <span
+                                                                    className={`badge ${(t.type ||
+                                                                        "ticket") ===
+                                                                        "complaint"
+                                                                        ? "bg-danger"
+                                                                        : "bg-primary"
+                                                                        }`}
+                                                                >
+                                                                    {t.type ||
+                                                                        "ticket"}
+                                                                </span>
+                                                            </td>
+
+                                                            <td>
+                                                                <span className="badge bg-warning text-dark">
+                                                                    {getStatus(
+                                                                        t.status
+                                                                    )}
+                                                                </span>
+                                                            </td>
+
+                                                            <td>
+                                                                {t.created_at}
+                                                            </td>
+
+                                                            <td>
+                                                                <button
+                                                                    className="btn btn-sm btn-info me-2"
+                                                                    onClick={() =>
+                                                                        navigate(
+                                                                            `/ticket/view/${t.ticket_id}`
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    View
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-primary"
+                                                                    onClick={() =>
+                                                                        navigate(
+                                                                            `/ticket/manage/${t.ticket_id}`
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Manage
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* PAGINATION */}
+                                    <nav className="mt-3">
+                                        <ul className="pagination justify-content-center">
+                                            <li
+                                                className={`page-item ${page === 1 ? "disabled" : ""
+                                                    }`}
+                                            >
+                                                <button
+                                                    className="page-link"
+                                                    onClick={() =>
+                                                        setPage(page - 1)
+                                                    }
+                                                >
+                                                    Previous
+                                                </button>
+                                            </li>
+
+                                            {renderPagination()}
+
+                                            <li
+                                                className={`page-item ${page === lastPage
+                                                    ? "disabled"
+                                                    : ""
+                                                    }`}
+                                            >
+                                                <button
+                                                    className="page-link"
+                                                    onClick={() =>
+                                                        setPage(page + 1)
+                                                    }
+                                                >
+                                                    Next
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

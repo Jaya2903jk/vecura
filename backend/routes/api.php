@@ -34,6 +34,7 @@ Route::middleware('check.token')->group(function () {
     Route::post('/tickets/{id}/accept', [TicketController::class, 'accept']);
 
 
+    Route::get('/locations', [MasterController::class, 'locations']);
     Route::get('/customers/search', [MasterController::class, 'searchCustomer']);
     Route::get('/search-service', [MasterController::class, 'searchService']);
     // Route::post('/billing', [MasterController::class, 'store']);

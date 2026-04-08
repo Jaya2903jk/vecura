@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\UserMaster;
+use App\Models\LocationMaster;
 
 class MasterController extends Controller
 {
@@ -21,9 +23,9 @@ class MasterController extends Controller
     public function issueCategories(Request $request)
     {
         $query = DB::table('issue_categories');
- if ($request->has('department_id') && $request->department_id != '') {
-        $query->where('department_id', $request->department_id);
-    }
+        if ($request->has('department_id') && $request->department_id != '') {
+            $query->where('department_id', $request->department_id);
+        }
         $data = $query->get();
         return response()->json([
             'status' => true,
@@ -54,7 +56,6 @@ class MasterController extends Controller
                 'status' => true,
                 'data' => $issues
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
@@ -63,7 +64,7 @@ class MasterController extends Controller
         }
     }
 
-     public function getRoles()
+    public function getRoles()
     {
         $roles = DB::connection('sqlsrv')
             ->table('User_Group_Master')
@@ -109,13 +110,29 @@ class MasterController extends Controller
             })
         ]);
     }
+   public function locations()
+    {
+        $locations = LocationMaster::orderBy('LocationName')->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $locations
+        ]);
+    }
     public function searchCustomer(Request $req)
     {
-        $data = DB::table('Patient_Personal_Details')
-            ->where('RegistrationNo', 'LIKE', "%{$req->search}%")
-            // ->orWhere('PatientName', 'LIKE', "%{$req->search}%")
-            ->limit(10)
-            ->get();
+        $user = UserMaster::find($req->auth_user_id);
+
+        $query = DB::table('Patient_Personal_Details')
+            ->where(function ($q) use ($req) {
+                $q->where('RegistrationNo', 'LIKE', "%{$req->search}%")
+                    ->orWhere('Mobile', 'LIKE', "%{$req->search}%");
+            });
+        if (!$user->SuberAdmin) {
+            $query->where('Loc_id', $user->Loc_id);
+        }
+
+        $data = $query->limit(10)->get();
 
         return response()->json([
             'status' => true,

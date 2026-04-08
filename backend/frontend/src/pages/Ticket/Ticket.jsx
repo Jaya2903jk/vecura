@@ -54,7 +54,6 @@ export default function Ticket() {
             .catch(() => setLoading(false));
     }, [page, search, statusFilter, priorityFilter]);
 
-    // ✅ PAGINATION UI
     const renderPagination = () => {
         let pages = [];
 
@@ -77,7 +76,6 @@ export default function Ticket() {
     return (
         <div className="page-inner">
 
-            {/* Header */}
             <div className="d-flex align-items-left flex-column pt-2 pb-4">
                 <ul className="breadcrumbs mb-3">
                     <li className="nav-home">
@@ -94,7 +92,6 @@ export default function Ticket() {
                 <div className="col-md-12">
                     <div className="card">
 
-                        {/* Header */}
                         <div className="card-header d-flex justify-content-between align-items-center">
                             <h4 className="card-title mb-0">Ticket List</h4>
                             <div>
@@ -115,7 +112,6 @@ export default function Ticket() {
 
                         <div className="card-body">
 
-                            {/* FILTERS */}
                             <div className="row mb-3">
                                 <div className="col-md-4">
                                     <input

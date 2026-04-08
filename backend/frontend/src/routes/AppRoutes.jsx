@@ -5,6 +5,8 @@ import Clients from "../pages/Clients";
 import Settings from "../pages/Settings";
 import AdminLayout from "../layouts/AdminLayout";
 import Ticket from "../pages/Ticket/Ticket";
+import TicketTest from "../pages/Ticket/test";
+
 import TicketManage from "../pages/Ticket/TicketManage";
 import AddTicket from "../pages/Ticket/TicketAdd";
 import TicketView from "../pages/Ticket/TicketView";
@@ -30,6 +32,7 @@ export default function AppRoutes({ setLoading }) {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/clients" element={<Clients />} />
                     <Route path="/settings" element={<Settings />} />
+                      <Route path="/test" element={<TicketTest />} />
                     <Route path="/ticket" element={<Ticket />} />
                     <Route path="/ticket/manage" element={<TicketManage />} />
                     <Route path="/ticket/add" element={<AddTicket />} />
