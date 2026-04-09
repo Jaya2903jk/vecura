@@ -22,7 +22,7 @@
 }
 
 
-.premium-header {
+/* .premium-header {
     background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
     color: white;
 
@@ -35,7 +35,7 @@
 
     display: flex;
     align-items: center;
-}
+} */
 
 /* Labels */
 .label {
@@ -228,6 +228,13 @@
     color: #fff;
     font-size: 13px;
     padding: 8px 12px;
+    font-weight: 600;
+}
+.premium-header {
+    background: linear-gradient(135deg, var(--dark-blue), var(--primary-blue));
+    color: #fff;
+    font-size: 13px;
+    /* padding: 8px 12px; */
     font-weight: 600;
 }
 

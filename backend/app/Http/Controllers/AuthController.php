@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Models\UserMaster;
 use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
@@ -16,14 +17,22 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::where(function ($q) use ($request) {
+        // $user = User::where(function ($q) use ($request) {
+        //     $q->where('UserID', $request->login)
+        //         ->orWhere('UserCode', $request->login);
+        // })->first();
+            $user = UserMaster::with('userGroup') // eager load group
+        ->where(function ($q) use ($request) {
             $q->where('UserID', $request->login)
-                ->orWhere('UserCode', $request->login);
+              ->orWhere('UserCode', $request->login);
         })->first();
 
-        if (!$user ||
-        //  $user->UserActive !== 'Yes' ||
-          trim($user->Password) !== trim($request->password)) {
+
+        if (
+            !$user ||
+            //  $user->UserActive !== 'Yes' ||
+            trim($user->Password) !== trim($request->password)
+        ) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invalid credentials or inactive user',
@@ -48,6 +57,9 @@ class AuthController extends Controller
                 'id' => $user->UserID,
                 'code' => $user->UserCode,
                 'name' => $user->FullName ?? $user->UserName,
+                'roleId' => $user->userGroup->UserGroupID,
+                // 'roleId' => $user->UserGroupCode,
+                 'roleName' => $user->userGroup->UserGroupName ?? null
             ],
         ]);
     }

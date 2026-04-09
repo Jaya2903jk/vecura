@@ -33,6 +33,10 @@ export default function IssuesMaster() {
         Level5Role: "",
         Status: 1,
     });
+    // Approval flow state
+    const [approvalFlow, setApprovalFlow] = useState([]);
+    const [approvalFlowStatus, setApprovalFlowStatus] = useState({});
+    const [approvalFlowNote, setApprovalFlowNote] = useState({});
 
     // Fetch tickets
     const fetchData = () => {
@@ -82,6 +86,23 @@ export default function IssuesMaster() {
         fetchData();
         fetchDropdowns();
     }, [page, search, statusFilter]);
+    // Initialize approval flow when editing
+    useEffect(() => {
+        if (editDept.IssueId && editDept.approvalFlow) {
+            const flow = editDept.approvalFlow.map(f => f.roleId);
+            setApprovalFlow(flow);
+
+            const statusObj = {};
+            const noteObj = {};
+            editDept.approvalFlow.forEach(f => {
+                statusObj[f.roleId] = f.status || "Pending";
+                noteObj[f.roleId] = f.note || "";
+            });
+
+            setApprovalFlowStatus(statusObj);
+            setApprovalFlowNote(noteObj);
+        }
+    }, [editDept]);
 
     // Delete ticket
     const handleDelete = (id) => {
@@ -115,10 +136,23 @@ export default function IssuesMaster() {
     // Update ticket
     const handleUpdate = () => {
         const token = localStorage.getItem("token");
+
+        // Prepare payload for backend
+        const payload = {
+            ...editDept,
+            approvalFlow: approvalFlow.map((roleId, index) => ({
+                roleId,
+                levelOrder: index + 1,
+                levelName: roles.find((r) => r.UserGroupID === roleId)?.UserGroupName || "",
+                status: approvalFlowStatus[roleId] || "Pending",
+                note: approvalFlowNote[roleId] || "",
+            })),
+        };
+
         fetch(`http://127.0.0.1:8000/api/issues-master/${editDept.IssueId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify(editDept),
+            body: JSON.stringify(payload),
         })
             .then((res) => res.json())
             .then((data) => {
@@ -236,30 +270,14 @@ export default function IssuesMaster() {
                                                             <td>{t.category_name}</td>
                                                             <td>{t.IssueName}</td>
                                                             <td>
-                                                                {[
-                                                                    t.Level1Name,
-                                                                    t.Level2Name,
-                                                                    t.Level3Name,
-                                                                    t.Level4Name,
-                                                                    t.Level5Name,
-                                                                ].filter(Boolean).length > 0 && (
-                                                                        <>
-                                                                            Level {[
-                                                                                t.Level1Name,
-                                                                                t.Level2Name,
-                                                                                t.Level3Name,
-                                                                                t.Level4Name,
-                                                                                t.Level5Name,
-                                                                            ].filter(Boolean).length} - (
-                                                                            {[
-                                                                                t.Level1Name,
-                                                                                t.Level2Name,
-                                                                                t.Level3Name,
-                                                                                t.Level4Name,
-                                                                                t.Level5Name,
-                                                                            ].filter(Boolean).join(", ")})
-                                                                        </>
-                                                                    )}
+                                                                {t.approvalFlow.length > 0 ? (
+                                                                    <>
+                                                                        Level {t.approvalFlow.length} - (
+                                                                        {t.approvalFlow.map(f => f.levelName).join(", ")})
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="text-muted">No approval levels</span>
+                                                                )}
                                                             </td>
                                                             <td>
                                                                 <span className={`badge ${t.Status == 1 ? "bg-success" : "bg-danger"}`}>
@@ -295,29 +313,35 @@ export default function IssuesMaster() {
 
                             {/* VIEW MODAL */}
                             <div className="modal fade" id="viewModal" tabIndex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
-                                <div className="modal-dialog modal-dialog-centered">
+                                <div className="modal-dialog modal-dialog-centered modal-lg">
                                     <div className="modal-content">
                                         <div className="modal-header">
                                             <h1 className="modal-title fs-5" id="viewModalLabel">Ticket Issues Master View</h1>
                                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
+
                                         <div className="modal-body">
                                             {selectedDept ? (
                                                 <>
                                                     <p><strong>Department Name:</strong> {selectedDept.DepartmentName}</p>
                                                     <p><strong>Category Name:</strong> {selectedDept.category_name}</p>
                                                     <p><strong>Issue Name:</strong> {selectedDept.IssueName}</p>
-                                                    <p><strong>Approval Levels:</strong> {[
-                                                        selectedDept.Level1Name,
-                                                        selectedDept.Level2Name,
-                                                        selectedDept.Level3Name,
-                                                        selectedDept.Level4Name,
-                                                        selectedDept.Level5Name,
-                                                    ].filter(Boolean).join(", ")}</p>
                                                     <p><strong>Status:</strong> {selectedDept.Status == 1 ? "Active" : "Inactive"}</p>
+
+                                                    <hr />
+                                                    <p><strong>Approval Levels:</strong> {
+                                                        selectedDept.approvalFlow && selectedDept.approvalFlow.length > 0
+                                                            ? selectedDept.approvalFlow
+                                                                .map(flow => `Level ${flow.levelOrder} – ${flow.status}`)
+                                                                .join(', ')
+                                                            : "No approval levels assigned"
+                                                    }</p>
                                                 </>
-                                            ) : (<p>No data</p>)}
+                                            ) : (
+                                                <p>No data</p>
+                                            )}
                                         </div>
+
                                         <div className="modal-footer">
                                             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                         </div>
@@ -326,57 +350,141 @@ export default function IssuesMaster() {
                             </div>
 
                             {/* EDIT MODAL */}
+
+                            {/* EDIT MODAL */}
                             <div className="modal fade" id="editModal" tabIndex="-1" aria-hidden="true">
-                                <div className="modal-dialog modal-dialog-centered">
+                                <div className="modal-dialog modal-dialog-centered modal-lg">
                                     <div className="modal-content">
                                         <div className="modal-header">
-                                            <h5>Edit Ticket Issue</h5>
+                                            <h5 className="modal-title">Edit Ticket Issue</h5>
                                             <button className="btn-close" data-bs-dismiss="modal" id="editModalClose"></button>
                                         </div>
+
                                         <div className="modal-body">
-                                            <div className="mb-2">
-                                                <label>Department</label>
-                                                <select className="form-control" value={editDept.DepartmentId} onChange={(e) => setEditDept({ ...editDept, DepartmentId: e.target.value })}>
-                                                    <option value="">Select Department</option>
-                                                    {departments.map(d => <option key={d.DepartmentId} value={d.DepartmentId}>{d.DepartmentName}</option>)}
-                                                </select>
+                                            <div className="row g-3">
+                                                {/* Department */}
+                                                <div className="col-md-6">
+                                                    <label>Department</label>
+                                                    <select
+                                                        className="form-control"
+                                                        value={editDept.DepartmentId}
+                                                        onChange={(e) => {
+                                                            setEditDept({ ...editDept, DepartmentId: e.target.value, CategoryId: "" });
+                                                            fetchCategories(e.target.value);
+                                                        }}
+                                                    >
+                                                        <option value="">Select Department</option>
+                                                        {departments.map((d) => (
+                                                            <option key={d.DepartmentId} value={d.DepartmentId}>{d.DepartmentName}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                {/* Category */}
+                                                <div className="col-md-6">
+                                                    <label>Category</label>
+                                                    <select
+                                                        className="form-control"
+                                                        value={editDept.CategoryId}
+                                                        onChange={(e) => setEditDept({ ...editDept, CategoryId: e.target.value })}
+                                                    >
+                                                        <option value="">Select Category</option>
+                                                        {categories.map((c) => (
+                                                            <option key={c.category_id} value={c.category_id}>{c.category_name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                {/* Issue Name */}
+                                                <div className="col-md-6">
+                                                    <label>Issue Name</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        value={editDept.IssueName}
+                                                        onChange={(e) => setEditDept({ ...editDept, IssueName: e.target.value })}
+                                                    />
+                                                </div>
+
+                                                {/* Status */}
+                                                <div className="col-md-6">
+                                                    <label>Status</label>
+                                                    <select
+                                                        className="form-control"
+                                                        value={editDept.Status}
+                                                        onChange={(e) => setEditDept({ ...editDept, Status: e.target.value })}
+                                                    >
+                                                        <option value="1">Active</option>
+                                                        <option value="0">Inactive</option>
+                                                    </select>
+                                                </div>
+
+                                                {/* Add Role */}
+                                                <div className="col-md-6">
+                                                    <label>Add Role</label>
+                                                    <select
+                                                        className="form-control"
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val && !approvalFlow.includes(val)) {
+                                                                setApprovalFlow([...approvalFlow, val]);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="">Select Role</option>
+                                                        {roles.map((r) => (
+                                                            <option key={r.UserGroupID} value={r.UserGroupID}>{r.UserGroupName}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div className="mb-2">
-                                                <label>Category</label>
-                                                <select className="form-control" value={editDept.CategoryId} onChange={(e) => setEditDept({ ...editDept, CategoryId: e.target.value })}>
-                                                    <option value="">Select Category</option>
-                                                    {categories.map(c => <option key={c.category_id} value={c.category_id}>{c.category_name}</option>)}
-                                                </select>
-                                            </div>
-                                            <div className="mb-2">
-                                                <label>Issue Name</label>
-                                                <input type="text" className="form-control" value={editDept.IssueName} onChange={(e) => setEditDept({ ...editDept, IssueName: e.target.value })} />
-                                            </div>
-                                            <div className="mb-2">
-                                                <label>Approval Level 1</label>
-                                                <select className="form-control" value={editDept.Level1Role} onChange={(e) => setEditDept({ ...editDept, Level1Role: e.target.value })}>
-                                                    <option value="">Select Role</option>
-                                                    {roles.map(r => <option key={r.UserGroupID} value={r.UserGroupID}>{r.UserGroupName}</option>)}
-                                                </select>
-                                            </div>
-                                            <div className="mb-2">
-                                                <label>Approval Level 2</label>
-                                                <select className="form-control" value={editDept.Level2Role} onChange={(e) => setEditDept({ ...editDept, Level2Role: e.target.value })}>
-                                                    <option value="">Select Role</option>
-                                                    {roles.map(r => <option key={r.UserGroupID} value={r.UserGroupID}>{r.UserGroupName}</option>)}
-                                                </select>
-                                            </div>
-                                            {/* Repeat for Level3Role, Level4Role, Level5Role if needed */}
-                                            <div className="mb-2">
-                                                <label>Status</label>
-                                                <select className="form-control" value={editDept.Status} onChange={(e) => setEditDept({ ...editDept, Status: e.target.value })}>
-                                                    <option value="1">Active</option>
-                                                    <option value="0">Inactive</option>
-                                                </select>
-                                            </div>
+
+                                            <hr />
+
+                                            {/* Approval Flow */}
+                                            <h6>Approval Flow</h6>
+                                            {approvalFlow.length === 0 && <p className="text-muted small">No roles added yet.</p>}
+
+                                            {approvalFlow.map((roleId, index) => {
+                                                const role = roles.find(r => r.UserGroupID === roleId);
+                                                const roleName = role ? role.UserGroupName : roleId;
+
+                                                return (
+                                                    <div key={roleId} className="border p-2 mb-2">
+                                                        <div className="d-flex justify-content-between align-items-center mb-1">
+                                                            <span><strong>Lvl {index + 1}:</strong> {roleName}</span>
+                                                            <div className="btn-group btn-group-sm">
+                                                                <button type="button" className="btn btn-light" disabled={index === 0} onClick={() => {
+                                                                    const arr = [...approvalFlow];
+                                                                    [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+                                                                    setApprovalFlow(arr);
+                                                                }}>↑</button>
+                                                                <button type="button" className="btn btn-light" disabled={index === approvalFlow.length - 1} onClick={() => {
+                                                                    const arr = [...approvalFlow];
+                                                                    [arr[index + 1], arr[index]] = [arr[index], arr[index + 1]];
+                                                                    setApprovalFlow(arr);
+                                                                }}>↓</button>
+                                                                <button type="button" className="btn btn-danger" onClick={() => setApprovalFlow(approvalFlow.filter((_, i) => i !== index))}>✕</button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mb-1">
+                                                            <select className="form-control form-control-sm" value={approvalFlowStatus[roleId] || "Pending"} onChange={(e) => setApprovalFlowStatus({ ...approvalFlowStatus, [roleId]: e.target.value })}>
+                                                                <option>Pending</option>
+                                                                <option>Accepted</option>
+                                                                <option>Verified</option>
+                                                                <option>Approved</option>
+                                                            </select>
+                                                        </div>
+
+                                                        <textarea className="form-control form-control-sm" rows="2" placeholder="Note" value={approvalFlowNote[roleId] || ""} onChange={(e) => setApprovalFlowNote({ ...approvalFlowNote, [roleId]: e.target.value })}></textarea>
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
+
                                         <div className="modal-footer">
-                                            <button className="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                             <button className="btn btn-primary" onClick={handleUpdate}>Update</button>
                                         </div>
                                     </div>

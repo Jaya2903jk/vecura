@@ -8,14 +8,24 @@ export default function IssuesMasterAdd() {
     const [categories, setCategories] = useState([]);
     const [rolesList, setRolesList] = useState([]);
     const [selectedDept, setSelectedDept] = useState("");
+    const [approvalFlow, setApprovalFlow] = useState([]);
+    const [approvalFlowStatus, setApprovalFlowStatus] = useState({});
+    const [approvalFlowNote, setApprovalFlowNote] = useState({});
 
+    // Now safe to create approvalFlowData
+    const approvalFlowData = approvalFlow.map((roleId, index) => ({
+        roleId,
+        levelOrder: index + 1,
+        levelName: `Level ${index + 1}`,
+        status: approvalFlowStatus[roleId] || 'Pending',
+        note: approvalFlowNote[roleId] || ''
+    }));
     const [form, setForm] = useState({
         DepartmentId: "",
         CategoryId: "",
         IssueName: "",
         Status: "Active",
     });
-    const [approvalFlow, setApprovalFlow] = useState([]);
     const [loading, setLoading] = useState(false);
 
     const [alert, setAlert] = useState({
@@ -125,13 +135,13 @@ export default function IssuesMasterAdd() {
             return;
         }
 
-        const levels = {
-            Level1Role: approvalFlow[0] || null,
-            Level2Role: approvalFlow[1] || null,
-            Level3Role: approvalFlow[2] || null,
-            Level4Role: approvalFlow[3] || null,
-            Level5Role: approvalFlow[4] || null,
-        };
+        // const levels = {
+        //     Level1Role: approvalFlow[0] || null,
+        //     Level2Role: approvalFlow[1] || null,
+        //     Level3Role: approvalFlow[2] || null,
+        //     Level4Role: approvalFlow[3] || null,
+        //     Level5Role: approvalFlow[4] || null,
+        // };
 
         setLoading(true);
 
@@ -147,7 +157,8 @@ export default function IssuesMasterAdd() {
                 CategoryId: form.CategoryId,
                 IssueName: form.IssueName,
                 Status: form.Status === "Active" ? 1 : 0,
-                ...levels,
+                // ...levels,
+                approvalFlow: approvalFlowData,
             }),
         })
             .then((res) => res.json())
@@ -372,33 +383,75 @@ export default function IssuesMasterAdd() {
                                     </div>
                                 </div>
                                 <div className="mt-3">
-                                    <h5>Approval Flow</h5>
+                                    <h6>Approval Flow</h6>
 
-                                    {approvalFlow.map((role, index) => (
-                                        <div key={index} className="border p-2 mb-2 d-flex justify-content-between">
-                                            <span>Level {index + 1} - {role}</span>
+                                    {approvalFlow.length === 0 && (
+                                        <p className="text-muted small">No roles added yet. Please select roles above.</p>
+                                    )}
 
-                                            <div>
-                                                <button type="button" className="btn btn-sm btn-light me-1" onClick={() => {
-                                                    const arr = [...approvalFlow];
-                                                    [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
-                                                    setApprovalFlow(arr);
-                                                }} disabled={index === 0}>↑</button>
+                                    {approvalFlow.map((roleId, index) => {
+                                        const role = rolesList.find(r => r.UserGroupID === roleId);
+                                        const roleName = role ? role.UserGroupName : roleId;
 
-                                                <button type="button" className="btn btn-sm btn-light me-1" onClick={() => {
-                                                    const arr = [...approvalFlow];
-                                                    [arr[index + 1], arr[index]] = [arr[index], arr[index + 1]];
-                                                    setApprovalFlow(arr);
-                                                }} disabled={index === approvalFlow.length - 1}>↓</button>
+                                        return (
+                                            <div key={roleId} className="border p-1 mb-1">
+                                                <div className="d-flex justify-content-between align-items-center mb-1">
+                                                    <span className="small"><strong>Lvl {index + 1}:</strong> {roleName}</span>
+                                                    <div className="btn-group btn-group-sm" role="group">
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-light btn-sm"
+                                                            onClick={() => {
+                                                                if (index === 0) return;
+                                                                const arr = [...approvalFlow];
+                                                                [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+                                                                setApprovalFlow(arr);
+                                                            }}
+                                                            disabled={index === 0}
+                                                        >↑</button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-light btn-sm"
+                                                            onClick={() => {
+                                                                if (index === approvalFlow.length - 1) return;
+                                                                const arr = [...approvalFlow];
+                                                                [arr[index + 1], arr[index]] = [arr[index], arr[index + 1]];
+                                                                setApprovalFlow(arr);
+                                                            }}
+                                                            disabled={index === approvalFlow.length - 1}
+                                                        >↓</button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-danger btn-sm"
+                                                            onClick={() => setApprovalFlow(approvalFlow.filter((_, i) => i !== index))}
+                                                        >✕</button>
+                                                    </div>
+                                                </div>
 
-                                                <button type="button" className="btn btn-sm btn-danger" onClick={() =>
-                                                    setApprovalFlow(approvalFlow.filter((_, i) => i !== index))
-                                                }>✕</button>
+                                                <div className="mb-1">
+                                                    <select
+                                                        className="form-control form-control-sm"
+                                                        value={approvalFlowStatus[roleId] || 'Pending'}
+                                                        onChange={(e) => setApprovalFlowStatus({ ...approvalFlowStatus, [roleId]: e.target.value })}
+                                                    >
+                                                        <option value="Pending">Pending</option>
+                                                        <option value="Accepted">Accepted</option>
+                                                        <option value="Verified">Verified</option>
+                                                        <option value="Approved">Approved</option>
+                                                    </select>
+                                                </div>
+
+                                                <input
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    value={approvalFlowNote[roleId] || ''}
+                                                    onChange={(e) => setApprovalFlowNote({ ...approvalFlowNote, [roleId]: e.target.value })}
+                                                    placeholder="Add note"
+                                                />
                                             </div>
-                                        </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
-
                             </div>
 
                             <div className="card-action">

@@ -12,13 +12,27 @@ use App\Models\IssueMaster;
 use App\Models\PatientPersonalDetail;
 use App\Models\UserMaster;
 use App\Models\IssueTicket;
+use App\Models\ApprovalFlow;
+
+use Carbon\Carbon;
 
 class TicketController extends Controller
 {
 
     public function index(Request $request)
     {
-        $q = IssueTicket::with(['department', 'customer', 'location']);
+        $q = IssueTicket::with(['department', 'customer', 'location', 'complaints'])
+            ->withCount([
+                'complaints as pending_count' => function ($query) {
+                    $query->where('callStatus', 'pending');
+                },
+                'complaints as inprogress_count' => function ($query) {
+                    $query->where('callStatus', 'InProgress');
+                },
+                'complaints as closed_count' => function ($query) {
+                    $query->where('callStatus', 'Closed');
+                },
+            ]);
 
         if ($request->type) {
             if ($request->type === 'ticket') {
@@ -50,10 +64,7 @@ class TicketController extends Controller
         if ($request->location) {
             $q->where('Branch', $request->location); // use Branch, not LocId
         }
-        // return response()->json($request->location);
-        // if ($request->location) {
-        //     $q->where('LocId', $request->location);
-        // }
+
         $tickets = $q->orderBy('ticketId', 'desc')
             ->paginate($request->per_page ?? 10);
 
@@ -63,12 +74,16 @@ class TicketController extends Controller
                 'ticket_code' => $t->TicketCode,
                 'department'  => $t->department->DepartmentName ?? '-',
                 'reg_no'      => $t->customer->RegistrationNo ?? '-',
-                'location'    => $t->location->LocationName ?? '-', // relation uses Branch                'issue_type'  => $t->Issuelevel5 ?? $t->Subject,
+                'location'    => $t->location->LocationName ?? '-', // relation uses Branch
+                'issue_type'  => $t->Issuelevel5 ?? $t->Subject,
                 'priority'    => $t->Priority,
                 'status'      => $t->Status,
                 'created_at'  => $t->CreatedDate,
                 'type'        => $t->type ?? 'ticket',
                 // 'customer'    => $t->CustomerName,
+                'pending_count'    => $t->pending_count,
+                'inprogress_count' => $t->inprogress_count,
+                'closed_count'     => $t->closed_count,
             ];
         });
 
@@ -102,56 +117,56 @@ class TicketController extends Controller
 
             $userCode = $user->UserCode;
             $ticket = IssueTicket::where('CustomerCode', $request->customer_code)
-            ->where('Status', 0) // pending/open tickets only
-            ->first();
+                ->where('Status', 0) // pending/open tickets only
+                ->first();
             if (!$ticket) {
-            $ticketId = DB::connection('sqlsrv')
-                ->table('issueTicket')
-                ->insertGetId([
-                    'Department'   => $request->DepartmentId,
-                    'Subject'      => $category->category_name ?? null,
-                    'Issuelevel2'  => $category->category_name ?? null,
-                    'Issuelevel3'  => $category->category_name ?? null, // ✅ ADD THIS
-                    'Issuelevel5'  => $category->category_name ?? null,
-                    'CustomerCode' => $request->customer_code,
-                    'CustomerName' => $request->customer_name,
-                    'LocId' => $user->Loc_id ?: ($patient->Loc_Id ?: 1),
-                    'Branch' => $user->Loc_id ?: ($patient->Loc_Id ?: 1),
-                    'Status'       => 0,
-                    'type'         => 'complaint',
-                    'CreatedBy'    => $userCode,
-                    'CreatedDate'  => now(),
-                    'AcceptedBy'   => $userCode,
-                    'RequiredTime' => 1,
-                    'RequiredTimeType' => 'Day',
-                    'AttachFile'   => '',
-                    'FromProduct'  => $request->from_product ?? '',
-                    'ToProduct'  => $request->ToProduct ?? '',
-                    'BankName'  => $request->bank_name ?? '',
-                    'CardNo'  => $request->card_no ?? '',
-                    'CashAmt'  => $request->cash_amt ?? 0,
-                    'CardAmt'  => $request->card_amt ?? 0,
-                    'ScheduledDate'  => $request->scheduled_date ?? null,
-                    'BillRaisedType'  => $request->bill_raised_type ?? null,
-                    'NewBillType'  => $request->new_bill_type ?? null,
-                    'ProductCode'  => $request->product_code ?? null,
-                    'ServiceCode'  => $request->service_code ?? null,
-                    'ServiceName'  => $request->service_name ?? null,
-                    'DiscountAmt'  => $request->discount_amt ?? 0,
-                    'BillNoFrom'  => $request->bill_no_from ?? '',
-                    'BillNoTo'  => $request->bill_no_to ?? '',
-                    'NewRequestedBillDate'  => $request->new_requested_bill_date ?? null,
-                    'BillType'  => $request->bill_type ?? '',
-                    'OriyanaId'  => $request->oriyana_id ?? '',
-                    'MobileNo'  => $request->alternate_mobile ?? '',
-                    'EmpName'  => $user->UserName ?? '',
-                    'ApprovedStatus' => 'Pending',
-                    'ApprovedBy' => '',
-                    'Email' => $user->Email ?? '',
+                $ticketId = DB::connection('sqlsrv')
+                    ->table('issueTicket')
+                    ->insertGetId([
+                        'Department'   => $request->DepartmentId,
+                        'Subject'      => $category->category_name ?? null,
+                        'Issuelevel2'  => $category->category_name ?? null,
+                        'Issuelevel3'  => $category->category_name ?? null, // ✅ ADD THIS
+                        'Issuelevel5'  => $category->category_name ?? null,
+                        'CustomerCode' => $request->customer_code,
+                        'CustomerName' => $request->customer_name,
+                        'LocId' => $user->Loc_id ?: ($patient->Loc_Id ?: 1),
+                        'Branch' => $user->Loc_id ?: ($patient->Loc_Id ?: 1),
+                        'Status'       => 0,
+                        'type'         => 'complaint',
+                        'CreatedBy'    => $userCode,
+                        'CreatedDate'  => now(),
+                        'AcceptedBy'   => $userCode,
+                        'RequiredTime' => 1,
+                        'RequiredTimeType' => 'Day',
+                        'AttachFile'   => '',
+                        'FromProduct'  => $request->from_product ?? '',
+                        'ToProduct'  => $request->ToProduct ?? '',
+                        'BankName'  => $request->bank_name ?? '',
+                        'CardNo'  => $request->card_no ?? '',
+                        'CashAmt'  => $request->cash_amt ?? 0,
+                        'CardAmt'  => $request->card_amt ?? 0,
+                        'ScheduledDate'  => $request->scheduled_date ?? null,
+                        'BillRaisedType'  => $request->bill_raised_type ?? null,
+                        'NewBillType'  => $request->new_bill_type ?? null,
+                        'ProductCode'  => $request->product_code ?? null,
+                        'ServiceCode'  => $request->service_code ?? null,
+                        'ServiceName'  => $request->service_name ?? null,
+                        'DiscountAmt'  => $request->discount_amt ?? 0,
+                        'BillNoFrom'  => $request->bill_no_from ?? '',
+                        'BillNoTo'  => $request->bill_no_to ?? '',
+                        'NewRequestedBillDate'  => $request->new_requested_bill_date ?? null,
+                        'BillType'  => $request->bill_type ?? '',
+                        'OriyanaId'  => $request->oriyana_id ?? '',
+                        'MobileNo'  => $request->alternate_mobile ?? '',
+                        'EmpName'  => $user->UserName ?? '',
+                        'ApprovedStatus' => 'Pending',
+                        'ApprovedBy' => '',
+                        'Email' => $user->Email ?? '',
 
-                ]);
+                    ]);
                 $ticket = IssueTicket::find($ticketId);
-        }
+            }
             $last = CustomerRefundComplaint::orderBy('complaintid', 'desc')->first();
             $next = 1;
 
@@ -178,8 +193,9 @@ class TicketController extends Controller
                 // 'DepartmentName' => $department->DepartmentName ?? null,
                 'Complaint' => $category->category_name ?? null,
                 'TypeofEscalation' => $issue->IssueName ?? null,
+                'issue_master_id' => $request->issue,
                 'callStatus' => 'Pending',
-                  'ticketId'   => $ticket->ticketId,
+                'ticketId'   => $ticket->ticketId,
             ]);
 
             DB::commit();
@@ -188,7 +204,7 @@ class TicketController extends Controller
                 'status' => true,
                 'message' => 'Complaint Created',
                 'data' => $complaint,
-                 'ticket'  => $ticket,
+                'ticket'  => $ticket,
             ]);
         } catch (\Exception $e) {
 
@@ -203,10 +219,16 @@ class TicketController extends Controller
 
     public function show($id)
     {
-        $ticket = DB::connection('sqlsrv')
-            ->table('issueTicket')
-            ->where('ticketId', $id)
-            ->first();
+
+        $ticket = IssueTicket::with([
+            'department',
+            'location',
+            'customer',
+            'complaints.category',
+            'complaints.issue',
+            'complaints.createdUser',
+            'complaints.approvalFlows'
+        ])->find($id);
 
         if (!$ticket) {
             return response()->json([
@@ -217,8 +239,57 @@ class TicketController extends Controller
 
         return response()->json([
             'status' => true,
-            'data' => $ticket
+            'data' => [
+                'ticketId' => $ticket->ticketId,
+                'TicketCode' => $ticket->TicketCode,
+                'Department' => $ticket->department->DepartmentName ?? $ticket->Department,
+                'Branch' => $ticket->location->LocationName ?? $ticket->Branch,
 
+                'CustomerCode' => $ticket->CustomerCode,
+                'CustomerName' => $ticket->CustomerName ?? ($ticket->customer->PatientName ?? ''),
+                'mobile' => $ticket->customer->Mobile ?? '',
+                'Status' => $ticket->Status,
+                'CreatedBy' => $ticket->CreatedBy,
+                'AcceptedBy' => $ticket->AcceptedBy,
+
+                'CreatedDate' => $ticket->feedbackDate
+                    ? Carbon::parse($ticket->feedbackDate)->format('d-M-Y')
+                    : null,
+                'Subject' => $ticket->Subject,
+                'Brief' => $ticket->Brief,
+
+                'complaints' => $ticket->complaints->map(function ($c) {
+                    $approvalFlows = ApprovalFlow::where('issueId', $c->issue_master_id)
+                        ->orderBy('levelOrder')
+                        ->get(['roleId', 'levelName', 'status', 'note'])
+                        ->map(function ($f) {
+                            return [
+                                'roleId' => $f->roleId,
+                                'levelOrder' => $f->levelOrder,
+                                'levelName' => $f->levelName,
+                                'status' => $f->status,
+                                'note' => $f->note,
+                            ];
+                        });
+                    $approvalLevels = $c->approvalFlows->pluck('roleId')->toArray();
+
+                    return [
+                        'complaintId' => $c->complaintid,
+                        'Category' => $c->category->category_name ?? $c->Complaint,
+                        'Issue' => $c->issue->IssueName ?? $c->TypeofEscalation,
+                        'sources' => $c->sources ?? '',
+                        'Comment' => $c->feedback ?? $c->Complaint,
+                        'CreatedBy' => $c->createdUser->FullName ?? $c->CreatedBy,
+                        'CreatedDate' => ($c->CreatedDate ?? $c->feedbackDate)
+                            ? Carbon::parse($c->CreatedDate ?? $c->feedbackDate)->format('d-M-Y')
+                            : null,
+                        'Status' => $c->callStatus,
+                        'ApprovalFlows' => $approvalFlows,
+                        'ApprovalLevels' => $approvalLevels,
+
+                    ];
+                })
+            ]
         ]);
     }
 }
